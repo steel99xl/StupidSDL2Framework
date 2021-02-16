@@ -22,7 +22,7 @@ void Floofy::init(const char * title, int xpos, int ypos){
 
     renderer = SDL_CreateRenderer(window, -1, 0);
     if(renderer){
-      //SDL_RenderSetLogicalSize(renderer, XSize+1, YSize+1);
+      SDL_RenderSetScale(renderer, UpScale, UpScale);
       SDL_SetRenderDrawColor(renderer, 120, 120, 120, 255);
 
       std::cout << "Render Working" << std::endl;
@@ -41,13 +41,15 @@ void Floofy::Input(){
   SDL_Event event;
   SDL_PollEvent(&event);
   if(event.type == SDL_QUIT){running = false;}
-  if(event.window.event == SDL_WINDOWEVENT_MAXIMIZED){fullscreen = true; }
-  if(event.window.event == SDL_WINDOWEVENT_MINIMIZED){fullscreen = false; }
+  //if(event.window.event == SDL_WINDOWEVENT_MAXIMIZED){fullscreen = true; }
+  //if(event.window.event == SDL_WINDOWEVENT_MINIMIZED){fullscreen = false; }
   if(event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED){
     SDL_GetWindowSize(window, &width, &height);
   }
   if(event.type == SDL_MOUSEMOTION){
-      //SDL_GetMouseState(&mouseX,&mouseY);
+      SDL_GetMouseState(&MousePos[0],&MousePos[1]);
+      MousePos[0] = MousePos[0]/UpScale;
+      MousePos[1] = MousePos[1]/UpScale;
   }
   if(event.type == SDL_MOUSEBUTTONDOWN){
       if(event.button.button == SDL_BUTTON_LEFT){
@@ -62,22 +64,54 @@ void Floofy::Input(){
 
 
 void Floofy::Update(){
-  if(fullscreen){SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);}
-  if(!fullscreen){SDL_SetWindowFullscreen(window, 0);}
+  //STUFF
 
 }
 
-void Floofy::OpenTCP(const char* WEBSITE, int PORT){
+
+void Floofy::OpenClientTCP(const char* WEBSITE, int PORT){
 
     if (SDLNet_ResolveHost(&ip, WEBSITE, PORT) == -1) {
-      printf("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
+      printf("Resolve Host: %s\n", SDLNet_GetError());
     }
 
     tcpsock = SDLNet_TCP_Open(&ip);
     if (!tcpsock) {
-      printf("SDLNet_TCP_Open: %s\n", SDLNet_GetError());
+      printf("TCP Open: %s\n", SDLNet_GetError());
     }
 
+}
+
+void Floofy::ClientSend(const char* DATA){
+  if(tcpsock){
+    int len,result;
+    len = strlen(DATA);
+
+    result=SDLNet_TCP_Send(tcpsock,DATA,len);
+
+    if(result<len){
+      std::cout << "TCP Send: %\n", SDLNet_GetError();
+    }
+  }
+}
+
+void Floofy::ClientRecive(void* DATA, int MAXLEN){
+
+  if(tcpsock){
+    std::thread result(SDLNet_TCP_Recv,tcpsock,DATA,MAXLEN);
+    result.detach();
+
+  }
+  else{
+    std::cout << "tcp error" << std::endl;
+  }
+  /*if(result.join()<=0){
+    std::cout << "well somthing went wrong" << std::endl;
+  }*/
+}
+
+void Floofy::ClientClose(){
+  SDLNet_TCP_Close(tcpsock);
 }
 
 void Floofy::Pixel(int X, int Y, int R, int G, int B){
@@ -142,7 +176,7 @@ bool Floofy::Button(const char* LABLE, int TopX, int TopY, int R, int G, int B, 
   textRect.h = textSurface->h;
 
 
-  if(mouseX >= TopX && mouseX <= textRect.w+TopX && mouseY >= TopY && mouseY <= textRect.h+TopY){
+  if(MousePos[0] >= TopX && MousePos[0] <= textRect.w+TopX && MousePos[1] >= TopY && MousePos[1] <= textRect.h+TopY){
       MouseOver = true;
         R += 10;
         if(R >= 255){
@@ -243,7 +277,7 @@ void Floofy::Render(int FrameStart){
   FrameTime = SDL_GetTicks() - FrameStart;
 
   if(FrameDelay > FrameTime){
-    SDL_Delay(FrameDelay - FrameTime);
+    std::this_thread::sleep_for(std::chrono::milliseconds(FrameDelay - FrameTime));
   }
 }
 

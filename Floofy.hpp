@@ -2,6 +2,9 @@
 #define Floofy_hpp
 
 #include <iostream>
+#include <future>
+#include <chrono>
+#include <thread>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_net.h>
@@ -15,9 +18,9 @@ public:
 
     int width;
     int height;
+    int MousePos[2];
     int FPS;
-    int XSize;
-    int YSize;
+    int UpScale = 1;
 
     void init(const char* title, int xpos, int ypos);
 
@@ -27,7 +30,17 @@ public:
 
     void Update();
 
-    void OpenTCP(const char* WEBSITE, int PORT);
+    void OpenClientTCP(const char* WEBSITE, int PORT);
+
+    //void TCPClientReconnect(const char*)
+
+    void CleanTCP(){tcpsock = NULL;};
+
+    void ClientSend(const char* DATA);
+
+    void ClientRecive(void* DATA, int MAXLEN);
+
+    void ClientClose();
 
     void Pixel(int X, int Y, int R, int G, int B);
 
@@ -58,9 +71,6 @@ private:
   bool fullscreen;
   bool LeftClick;
   bool RightClick;
-  int mouseX;
-  int mouseY;
-  int Count = 0;
   int FrameTime;
   SDL_Window *window;
   IPaddress ip;
