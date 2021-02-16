@@ -71,13 +71,11 @@ void Floofy::OpenTCP(const char* WEBSITE, int PORT){
 
     if (SDLNet_ResolveHost(&ip, WEBSITE, PORT) == -1) {
       printf("SDLNet_ResolveHost: %s\n", SDLNet_GetError());
-      exit(1);
     }
 
     tcpsock = SDLNet_TCP_Open(&ip);
     if (!tcpsock) {
       printf("SDLNet_TCP_Open: %s\n", SDLNet_GetError());
-      exit(2);
     }
 
 }
